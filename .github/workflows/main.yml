@@ -8,7 +8,7 @@ on:
 
 # Define environment variables
 env:
-  FLUTTER_VERSION: "3.19.x" # Specify your preferred Flutter version
+  FLUTTER_VERSION: "3.27.3" # Specifically using Flutter 3.27.3 as requested
 
 jobs:
   build-web:
@@ -20,13 +20,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up Flutter
+      # Set up Flutter with specific version 3.27.3
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }} # Specific cache key for this version
 
       # Enable web support
       - name: Enable web support
