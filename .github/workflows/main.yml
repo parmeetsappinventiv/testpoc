@@ -1,36 +1,57 @@
-name: Flutter Build APK
+name: Flutter CI - Build Web
 
+# Trigger the workflow on push events to main branch
 on:
   push:
     branches:
       - main
 
+# Define environment variables
+env:
+  FLUTTER_VERSION: "3.19.x" # Specify your preferred Flutter version
+
 jobs:
-  build:
+  build-web:
+    name: Build Flutter Web
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code
+      # Checkout the repository code
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      # Step 2: Set up Flutter environment
-      - name: Set up Flutter
+      # Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
 
-      # Step 3: Install dependencies
-      - name: Install dependencies
+      # Enable web support
+      - name: Enable web support
+        run: flutter config --enable-web
+
+      # Get Flutter dependencies
+      - name: Get dependencies
         run: flutter pub get
 
-      # Step 4: Build the APK
-      - name: Build APK
-        run: flutter build apk --release
+      # Run Flutter analyze
+      - name: Analyze code
+        run: flutter analyze
 
-      # Step 5: Upload APK as an artifact (use v3 to avoid deprecated error)
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
+      # Run tests (optional, remove if not needed)
+      - name: Run tests
+        run: flutter test
+
+      # Build web application
+      - name: Build Web
+        run: flutter build web --release
+
+      # Upload web build artifacts
+      - name: Upload Web artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: web-build
+          path: build/web/
+          retention-days: 7
