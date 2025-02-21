@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,9 +28,9 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      # Step 5: Upload the APK as an artifact (optional)
+      # Step 5: Upload APK as an artifact (use v3 to avoid deprecated error)
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: apk
           path: build/app/outputs/flutter-apk/app-release.apk
