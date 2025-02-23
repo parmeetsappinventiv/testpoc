@@ -1,4 +1,4 @@
-name: Flutter CI - Build Web
+name: Flutter CI - Build Web and Release
 
 on:
   push:
@@ -25,7 +25,6 @@ jobs:
           cache: true
           cache-key: flutter-${{ env.FLUTTER_VERSION }}
 
-      # Verify Flutter installation
       - name: Verify Flutter installation
         run: flutter --version
 
@@ -34,9 +33,8 @@ jobs:
 
       - name: Get dependencies
         run: flutter pub get
-        continue-on-error: true # Continue if pub get has minor issues
+        continue-on-error: true
 
-      # Add custom analysis options
       - name: Create analysis_options.yaml
         run: |
           cat > analysis_options.yaml << 'EOF'
@@ -50,30 +48,24 @@ jobs:
               - avoid_print
           EOF
 
-      # Run analyze with strict checks
       - name: Analyze code
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
         continue-on-error: true
 
-      # Format code using dart format (replacement for flutter format)
       - name: Format code
         run: dart format . || echo "Formatting failed but continuing"
-        continue-on-error: true # Continue even if formatting fails
+        continue-on-error: true
 
-      # Clean before build to avoid cached issues
       - name: Clean project
         run: flutter clean
 
-      # Get dependencies again after clean
       - name: Get dependencies after clean
         run: flutter pub get
 
-      # Run tests with fallback
       - name: Run tests
         run: flutter test --no-pub --test-randomize-ordering-seed random || echo "Tests failed but continuing"
         continue-on-error: true
 
-      # Build web with error handling
       - name: Build Web
         run: |
           flutter build web --release || {
@@ -82,9 +74,29 @@ jobs:
             exit 1
           }
 
-      # Upload artifacts even if previous steps had issues
+      - name: Prepare release artifacts
+        run: |
+          cd build/web
+          zip -r ../../web-release.zip .
+          cd ../..
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ github.run_number }}"
+          name: "Web Release ${{ github.run_number }}"
+          body: |
+            Automated release of Flutter Web build
+            Commit: ${{ github.sha }}
+            Built on: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+          files: web-release.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload Web artifacts
-        if: always() # Run even if previous steps fail
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: web-build
